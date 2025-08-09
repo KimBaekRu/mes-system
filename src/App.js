@@ -378,6 +378,7 @@ function ProcessTimeChart({ processData }) {
 const socket = io(SERVER_URL);
 
 // 🔥 동적 위치 조정 컴포넌트 (생산량 창이 화면 밖으로 나가지 않도록) - 깜빡임 완전 제거
+<<<<<<< Updated upstream
 const DynamicPositionWrapper = React.forwardRef(
   (
     {
@@ -420,6 +421,90 @@ const DynamicPositionWrapper = React.forwardRef(
     });
 
     const wrapperRef = useRef(null);
+=======
+const DynamicPositionWrapper = React.forwardRef(({ processRect, scrollX, scrollY, inputBlocksCount, style, children, ...props }, ref) => {
+  // 🔥 초기 위치를 바로 계산해서 설정 (깜빡임 완전 방지)
+  const [position, setPosition] = useState(() => {
+    if (!processRect) return { left: 0, top: 0 };
+    
+    // 기본 위치 계산 (화면 밖으로 나가지 않도록 간단한 보정)
+    let left = processRect.left + scrollX;
+    let top = processRect.bottom + scrollY + 5;
+    
+    // 간단한 경계 체크
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    if (left + 600 > windowWidth + scrollX) {
+      left = windowWidth + scrollX - 600 - 20;
+    }
+    if (left < scrollX) {
+      left = scrollX + 20;
+    }
+    if (top + 400 > windowHeight + scrollY) {
+      top = processRect.top + scrollY - 400 - 5;
+    }
+    if (top < scrollY) {
+      top = scrollY + 20;
+    }
+    
+    return { left, top };
+  });
+  
+  const wrapperRef = useRef(null);
+
+  // 정밀한 위치 재계산 함수 (실제 요소 크기 기반)
+  const refinePosition = useCallback(() => {
+    if (!wrapperRef.current || !processRect) return;
+
+    const element = wrapperRef.current;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 실제 요소 크기 측정
+    const elementRect = element.getBoundingClientRect();
+    const popupWidth = elementRect.width || 600;
+    const popupHeight = elementRect.height || 400;
+    
+    let left = processRect.left + scrollX;
+    let top = processRect.bottom + scrollY + 5;
+    
+    // 정밀한 경계 체크
+    if (left + popupWidth > windowWidth + scrollX) {
+      left = windowWidth + scrollX - popupWidth - 20;
+    }
+    if (left < scrollX) {
+      left = scrollX + 20;
+    }
+    if (top + popupHeight > windowHeight + scrollY) {
+      top = processRect.top + scrollY - popupHeight - 5;
+    }
+    if (top < scrollY) {
+      top = scrollY + 20;
+    }
+
+    // 현재 위치와 다르면 업데이트
+    const currentPos = position;
+    if (Math.abs(currentPos.left - left) > 5 || Math.abs(currentPos.top - top) > 5) {
+    setPosition({ left, top });
+    }
+  }, [processRect, scrollX, scrollY, position]);
+
+  // DOM 렌더링 후 정밀한 위치 재계산
+  useEffect(() => {
+    if (processRect && wrapperRef.current) {
+      // 다음 프레임에서 정밀 계산 (DOM 완전히 렌더링 후)
+      requestAnimationFrame(refinePosition);
+    }
+  }, [refinePosition, inputBlocksCount]);
+
+  // 창 크기 변경시 재계산
+  useEffect(() => {
+    const handleResize = () => refinePosition();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [refinePosition]);
+>>>>>>> Stashed changes
 
     // 정밀한 위치 재계산 함수 (실제 요소 크기 기반)
     const refinePosition = useCallback(() => {
@@ -527,6 +612,7 @@ function ProcessTitleNode({
 }) {
   const [edit, setEdit] = useState(false);
   const [value, setValue] = useState(title);
+<<<<<<< Updated upstream
   useEffect(() => {
     setValue(title);
   }, [title]);
@@ -539,15 +625,33 @@ function ProcessTitleNode({
       console.log(
         `🔥 ${currentTeam}조 공정 ${id}: 클리어 상태 확인됨 - lastSaved 숨김`
       );
+=======
+  useEffect(() => { setValue(title); }, [title]);
+  
+  const [lastSaved, setLastSaved] = useState(() => {
+    // 🔥 클리어 상태 확인 - 클리어되었으면 lastSaved를 null로 설정
+    const clearedKey = `process_${id}_cleared_${currentTeam}`;
+    const isCleared = localStorage.getItem(clearedKey) === 'true';
+    if (isCleared) {
+      console.log(`🔥 ${currentTeam}조 공정 ${id}: 클리어 상태 확인됨 - lastSaved 숨김`);
+>>>>>>> Stashed changes
       return null;
     }
     return propLastSaved || null;
   });
+<<<<<<< Updated upstream
 
   useEffect(() => {
     // 🔥 클리어 상태 확인 - 클리어되었으면 lastSaved를 표시하지 않음
     const clearedKey = `process_${id}_cleared_${currentTeam}`;
     const isCleared = localStorage.getItem(clearedKey) === "true";
+=======
+  
+  useEffect(() => { 
+    // 🔥 클리어 상태 확인 - 클리어되었으면 lastSaved를 표시하지 않음
+    const clearedKey = `process_${id}_cleared_${currentTeam}`;
+    const isCleared = localStorage.getItem(clearedKey) === 'true';
+>>>>>>> Stashed changes
     if (isCleared) {
       setLastSaved(null);
     } else {
@@ -692,12 +796,20 @@ function ProcessTitleNode({
       blockIndex: index,
     };
     onAddMaint(id, newMaint);
+<<<<<<< Updated upstream
 
+=======
+    
+>>>>>>> Stashed changes
     // 🔥 정비이력 추가시 클리어 상태 해제 (새로운 데이터가 추가되었으므로)
     const clearedKey = `process_${id}_cleared_${currentTeam}`;
     localStorage.removeItem(clearedKey);
     console.log(`🔥 정비이력 추가로 인한 클리어 상태 해제: ${clearedKey} 제거`);
+<<<<<<< Updated upstream
 
+=======
+    
+>>>>>>> Stashed changes
     // 메시지창 없이 바로 적용! (작업자들의 집중도 향상)
 
     handleBlockChange(index, "maintStart", "");
@@ -738,6 +850,7 @@ function ProcessTitleNode({
     const existingDowntime = JSON.parse(localStorage.getItem(downKey) || "[]");
     const newDowntimeHistory = [...existingDowntime, newDowntime];
     localStorage.setItem(downKey, JSON.stringify(newDowntimeHistory));
+<<<<<<< Updated upstream
 
     // 🔥 비가동시간 추가시 클리어 상태 해제 (새로운 데이터가 추가되었으므로)
     const clearedKey = `process_${id}_cleared_${currentTeam}`;
@@ -746,6 +859,14 @@ function ProcessTitleNode({
       `🔥 비가동시간 추가로 인한 클리어 상태 해제: ${clearedKey} 제거`
     );
 
+=======
+    
+    // 🔥 비가동시간 추가시 클리어 상태 해제 (새로운 데이터가 추가되었으므로)
+    const clearedKey = `process_${id}_cleared_${currentTeam}`;
+    localStorage.removeItem(clearedKey);
+    console.log(`🔥 비가동시간 추가로 인한 클리어 상태 해제: ${clearedKey} 제거`);
+    
+>>>>>>> Stashed changes
     // 차트 업데이트를 위한 새로고침 트리거 (상위 컴포넌트에서 전달받아야 함)
     if (window.setChartRefresh) {
       window.setChartRefresh((prev) => prev + 1);
@@ -780,12 +901,20 @@ function ProcessTitleNode({
       if (setYieldValue) setYieldValue(blockToSave.yieldValue);
       if (setSecondValue) setSecondValue(blockToSave.secondValue);
     }
+<<<<<<< Updated upstream
 
+=======
+    
+>>>>>>> Stashed changes
     // 🔥 저장할 때 클리어 상태 해제 (새로운 데이터가 저장되었으므로)
     const clearedKey = `process_${id}_cleared_${currentTeam}`;
     localStorage.removeItem(clearedKey);
     console.log(`🔥 데이터 저장으로 인한 클리어 상태 해제: ${clearedKey} 제거`);
+<<<<<<< Updated upstream
 
+=======
+    
+>>>>>>> Stashed changes
     setLastSaved(lastSavedStr);
 
     // 🔥 생산음량 이력 저장 (상세 이력관리용)
@@ -829,6 +958,10 @@ function ProcessTitleNode({
   // 🔥 해당 블럭의 내용들만 지우는 CLEAR 함수 - 블록별 독립 처리
   const handleClearBlock = (index) => {
     try {
+<<<<<<< Updated upstream
+=======
+      
+>>>>>>> Stashed changes
       // 안전장치: inputBlocks와 해당 인덱스 확인
       if (!inputBlocks || !inputBlocks[index]) {
         console.log("블럭 데이터가 없습니다.");
@@ -862,6 +995,7 @@ function ProcessTitleNode({
       setInputBlocks(newBlocks);
 
       // 🔥 첫번째 블록(index 0)일 때만 부모 상태 업데이트
+<<<<<<< Updated upstream
       if (index === 0) {
         if (setYieldValue) setYieldValue("");
         if (setSecondValue) setSecondValue("");
@@ -968,6 +1102,86 @@ function ProcessTitleNode({
       );
     } catch (error) {
       console.error("CLEAR 함수 실행 중 오류:", error);
+=======
+    if (index === 0) {
+      if (setYieldValue) setYieldValue('');
+      if (setSecondValue) setSecondValue('');
+        // 첫번째 블록만 저장시간 지우기
+    setLastSaved(null);
+
+        // 🔥 첫번째 블록 클리어 상태 기록
+        const clearedKey = `process_${id}_cleared_${currentTeam}`;
+        localStorage.setItem(clearedKey, 'true');
+      }
+
+      // 🔥 localStorage에서 블록 데이터 업데이트
+    localStorage.setItem(`process_${id}_blocks_${currentTeam}`, JSON.stringify(newBlocks));
+    
+      // 🔥 해당 블록의 정비이력만 제거 (blockIndex 기반)
+    const maintenanceKey = `process_${id}_maintenance_${currentTeam}`;
+      const existingMaintenance = JSON.parse(localStorage.getItem(maintenanceKey) || '[]');
+      
+      // 삭제될 정비이력들의 장비명 수집
+      const deletedEquipmentNames = existingMaintenance
+        .filter(m => m.blockIndex === index || (m.blockIndex === undefined && index === 0))
+        .map(m => m.eqNo)
+        .filter(Boolean);
+      
+      const filteredMaintenance = existingMaintenance.filter(m => 
+        m.blockIndex !== index && !(m.blockIndex === undefined && index === 0)
+      );
+      localStorage.setItem(maintenanceKey, JSON.stringify(filteredMaintenance));
+      
+      // 🔥 해당 장비들의 메모 완전 삭제 (localStorage에서 아예 제거)
+      [...new Set(deletedEquipmentNames)].forEach(eqName => {
+        const matchedEqs = equipments.filter(e => e.name === eqName);
+        matchedEqs.forEach(eq => {
+          const memoKey = `equipment_${eq.id}_memo_${currentTeam}`;
+          localStorage.removeItem(memoKey); // 아예 삭제
+          console.log(`🔥 CLEAR: 장비 ${eq.name} 메모 localStorage에서 완전 삭제`);
+        });
+      });
+      
+      // 🔥 equipments 상태 업데이트 (메모 완전 삭제 반영)
+      if (deletedEquipmentNames.length > 0) {
+        setEquipments(eqs => eqs.map(e => 
+          deletedEquipmentNames.includes(e.name) 
+            ? { ...e, memo: '', memoRefresh: Date.now() } // 완전 강제 새로고침
+            : e
+        ));
+        
+        // 🔥 추가로 전체 equipments 강제 새로고침
+        setTimeout(() => {
+          setEquipments(eqs => eqs.map(e => ({
+            ...e,
+            memo: localStorage.getItem(`equipment_${e.id}_memo_${currentTeam}`) || '',
+            memoRefresh: Date.now()
+          })));
+        }, 100);
+      }
+      
+      // 🔥 해당 블록의 비가동이력만 제거 (blockIndex 기반)
+    const downtimeKey = `process_${id}_downtime_${currentTeam}`;
+      const existingDowntime = JSON.parse(localStorage.getItem(downtimeKey) || '[]');
+      const filteredDowntime = existingDowntime.filter(d => 
+        d.blockIndex !== index && !(d.blockIndex === undefined && index === 0)
+      );
+      localStorage.setItem(downtimeKey, JSON.stringify(filteredDowntime));
+      
+      // 🔥 상위 컴포넌트에 정비이력 업데이트 신호 (필터링된 데이터로)
+      if (onAddMaint) {
+        onAddMaint(id, { _updateHistory: true, _newHistory: filteredMaintenance });
+      }
+      
+      // 🔥 차트 업데이트 트리거
+      if (window.setChartRefresh) {
+        window.setChartRefresh(prev => prev + 1);
+      }
+      
+      console.log(`🔥 블럭 ${index + 1} 내용 및 해당 블록 정비이력/비가동시간만 지우기 완료`);
+    } catch (error) {
+      console.error('CLEAR 함수 실행 중 오류:', error);
+>>>>>>> Stashed changes
     }
   };
 
@@ -976,6 +1190,7 @@ function ProcessTitleNode({
     if (!showMaint) return;
     // 🔥 약간의 지연을 두어 생산량 버튼 클릭과 바깥클릭 감지의 충돌 방지
     const timer = setTimeout(() => {
+<<<<<<< Updated upstream
       function handleClickOutside(e) {
         if (blueBoxRef.current && blueBoxRef.current.contains(e.target)) return;
         setShowMaint(false);
@@ -990,6 +1205,22 @@ function ProcessTitleNode({
       clearTimeout(timer);
       if (window._handleClickOutside) {
         document.removeEventListener("mousedown", window._handleClickOutside);
+=======
+    function handleClickOutside(e) {
+      if (blueBoxRef.current && blueBoxRef.current.contains(e.target)) return;
+      setShowMaint(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+      
+      // cleanup 함수를 반환하기 위해 전역 변수로 저장
+      window._handleClickOutside = handleClickOutside;
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      if (window._handleClickOutside) {
+        document.removeEventListener('mousedown', window._handleClickOutside);
+>>>>>>> Stashed changes
         delete window._handleClickOutside;
       }
     };
@@ -2236,6 +2467,7 @@ function EquipmentNode({
       disabled={!(isAdmin && isEditMode)}
       key={eq.id + "-" + eq.x + "-" + eq.y}
     >
+<<<<<<< Updated upstream
       <div
         style={{ position: "absolute", width: 80, zIndex }}
         data-equipment-id={eq.id}
@@ -2287,6 +2519,33 @@ function EquipmentNode({
               }`,
             }}
           />
+=======
+      <div style={{ position: 'absolute', width: 80, zIndex }} data-equipment-id={eq.id}>
+        {/* 메모 세모 마크 - 🔥 localStorage에서 직접 확인하도록 수정 */}
+        {(() => {
+          const memoKey = `equipment_${eq.id}_memo_${currentTeam}`;
+          const currentMemo = localStorage.getItem(memoKey) || '';
+          return currentMemo && currentMemo.trim() ? (
+          <div style={{
+            position: 'absolute', left: 20, top: 8, width: 0, height: 0,
+            borderLeft: 0,
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid red',
+            zIndex: 10
+          }} />
+          ) : null;
+        })()}
+        {/* 타워램프 신호등 */}
+        <div style={{ width: (pendingSize ? pendingSize.width : imgSize.width), height: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2, marginLeft: 'auto', marginRight: 'auto' }}>
+          <div style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: lampColor[eq.status] || lampColor['idle'] || 'yellow', // 🔥 회색 대신 기본값 'idle'(노란색) 사용
+            border: '1px solid #888',
+            boxShadow: `0 0 12px 6px ${lampColor[eq.status] || lampColor['idle'] || 'yellow'}, 0 0 24px 12px ${lampColor[eq.status] || lampColor['idle'] || 'yellow'}`
+          }} />
+>>>>>>> Stashed changes
         </div>
         {/* 장비 이미지 */}
         <div
@@ -3249,7 +3508,11 @@ export default function App() {
           ...equipment,
           memo: teamMemo,
           selectedOption: teamMaterial,
+<<<<<<< Updated upstream
           status: teamStatus || equipment.status || "idle", // 🔥 문자열 그대로 사용, 기본값 'idle'
+=======
+          status: teamStatus || equipment.status || 'idle' // 🔥 문자열 그대로 사용, 기본값 'idle'
+>>>>>>> Stashed changes
         };
       });
       setEquipments(updatedEquipments);
@@ -3455,8 +3718,13 @@ export default function App() {
     const newAssignmentLineName = {
       id: newId,
       name: name.trim(),
+<<<<<<< Updated upstream
       x: window.innerWidth / 2 - 100, // 🔥 어싸인 현황 배경 정중앙
       y: 2 + assignmentLineNames.length * 60, // 🔥 상단 최상위부터
+=======
+      x: (window.innerWidth / 2) - 100, // 🔥 어싸인 현황 배경 정중앙
+      y: 2 + (assignmentLineNames.length * 60) // 🔥 상단 최상위부터
+>>>>>>> Stashed changes
     };
 
     setAssignmentLineNames((prev) => [...prev, newAssignmentLineName]);
@@ -3831,6 +4099,7 @@ export default function App() {
       .then((r) => r.json())
       .then(setLineNames);
 
+<<<<<<< Updated upstream
     socket.on("initialEquipments", (data) => {
       // 🔥 초기 장비 로드시 localStorage에서 조별 상태/메모/자재명 불러오기
       const updatedData = data.map((equipment) => {
@@ -3847,14 +4116,40 @@ export default function App() {
           `🔥 초기로드: 장비 ${equipment.name}(${equipment.id}) - 메모 ${teamMemo.length}자, 자재명 ${teamMaterial}, 상태 ${teamStatus}`
         );
 
+=======
+    socket.on('initialEquipments', data => {
+      // 🔥 초기 장비 로드시 localStorage에서 조별 상태/메모/자재명 불러오기
+      const updatedData = data.map(equipment => {
+        const memoKey = `equipment_${equipment.id}_memo_${currentTeam}`;
+        const materialKey = `equipment_${equipment.id}_material_${currentTeam}`;
+        const statusKey = `equipment_${equipment.id}_status_${currentTeam}`;
+        
+        const teamMemo = localStorage.getItem(memoKey) || '';
+        const teamMaterial = localStorage.getItem(materialKey) || equipment.selectedOption || '';
+        const teamStatus = localStorage.getItem(statusKey);
+        
+        console.log(`🔥 초기로드: 장비 ${equipment.name}(${equipment.id}) - 메모 ${teamMemo.length}자, 자재명 ${teamMaterial}, 상태 ${teamStatus}`);
+        
+>>>>>>> Stashed changes
         return {
           ...equipment,
           memo: teamMemo,
           selectedOption: teamMaterial,
+<<<<<<< Updated upstream
           status: teamStatus || equipment.status || "idle", // 🔥 문자열 그대로 사용, 기본값 'idle'
         };
       });
       setEquipments(updatedData);
+=======
+          status: teamStatus || equipment.status || 'idle' // 🔥 문자열 그대로 사용, 기본값 'idle'
+        };
+      });
+      setEquipments(updatedData);
+    });
+    socket.on('equipmentAdded', newEq => setEquipments(prev => [...prev, newEq]));
+    socket.on('equipmentUpdated', updated => {
+      setEquipments(prev => prev.map(eq => eq.id === updated.id ? updated : eq));
+>>>>>>> Stashed changes
     });
     socket.on("equipmentAdded", (newEq) =>
       setEquipments((prev) => [...prev, newEq])
@@ -3977,6 +4272,7 @@ export default function App() {
     // 🔥 블록별 정비이력 업데이트 신호를 받으면 해당 데이터로 업데이트
     if (newMaint._updateHistory && newMaint._newHistory) {
       console.log(`🔥 블록별 정비이력 업데이트 신호 받음 - ${currentTeam}조`);
+<<<<<<< Updated upstream
 
       // UI 업데이트 - 필터링된 데이터로 설정
       const updatedProcess = {
@@ -3990,12 +4286,23 @@ export default function App() {
       // 차트 실시간 업데이트 트리거
       setChartRefresh((prev) => prev + 1);
 
+=======
+      
+      // UI 업데이트 - 필터링된 데이터로 설정
+      const updatedProcess = { ...targetProcess, maintenanceHistory: newMaint._newHistory };
+      setProcessTitles(titles => titles.map(t => t.id === processId ? updatedProcess : t));
+      
+      // 차트 실시간 업데이트 트리거
+      setChartRefresh(prev => prev + 1);
+      
+>>>>>>> Stashed changes
       console.log(`🔥 ${currentTeam}조 블록별 정비이력 업데이트 완료`);
       return;
     }
 
     // 🔥 CLEAR 신호를 받으면 정비이력을 완전히 초기화 (사용 안함)
     if (newMaint._clearAll && newMaint._forceEmptyHistory) {
+<<<<<<< Updated upstream
       console.log(
         `🔥 정비이력 CLEAR 신호 받음 - ${currentTeam}조 정비이력 완전 초기화`
       );
@@ -4012,6 +4319,20 @@ export default function App() {
       // 차트 실시간 업데이트 트리거
       setChartRefresh((prev) => prev + 1);
 
+=======
+      console.log(`🔥 정비이력 CLEAR 신호 받음 - ${currentTeam}조 정비이력 완전 초기화`);
+      
+      const maintKey = `process_${processId}_maintenance_${currentTeam}`;
+      localStorage.removeItem(maintKey);
+      
+      // UI 업데이트 - 빈 배열로 설정
+      const updatedProcess = { ...targetProcess, maintenanceHistory: [] };
+      setProcessTitles(titles => titles.map(t => t.id === processId ? updatedProcess : t));
+      
+      // 차트 실시간 업데이트 트리거
+      setChartRefresh(prev => prev + 1);
+      
+>>>>>>> Stashed changes
       console.log(`🔥 ${currentTeam}조 정비이력 완전 초기화 완료`);
       return;
     }
@@ -4260,7 +4581,11 @@ export default function App() {
 
     // 🔥 조별 장비 상태 저장 (문자열로 저장)
     const statusKey = `equipment_${id}_status_${currentTeam}`;
+<<<<<<< Updated upstream
     const statusValue = status || "idle"; // 기본값 확보
+=======
+    const statusValue = status || 'idle'; // 기본값 확보
+>>>>>>> Stashed changes
     localStorage.setItem(statusKey, statusValue);
     console.log(`🔥 조별 장비 상태 저장: ${statusKey} = ${statusValue}`);
 
@@ -5381,6 +5706,7 @@ export default function App() {
       </div>
 
       {/* 전문적인 편집 도구들은 상단으로 이동 */}
+<<<<<<< Updated upstream
       <div
         style={{
           position: "relative",
@@ -5397,6 +5723,22 @@ export default function App() {
           setOpenPopup(null); // 모든 공정 노드 팝업을 닫습니다.
         }}
       >
+=======
+      <div style={{
+        position: 'relative',
+        width: '100vw',
+        height: '110vh',
+        minHeight: '100vh',
+        backgroundColor: '#2a2a2a',
+        overflow: 'auto'
+      }}
+      onClick={() => {
+        setOpenStatusEquipmentId(null); // 바탕화면 클릭 시 상태창 닫힘
+        setOpenOptionEquipmentId(null); // 자재 옵션창도 닫힘
+        setResizeTargetId(null); // 바탕화면 클릭 시 이모티콘 숨김
+        setOpenPopup(null); // 모든 공정 노드 팝업을 닫습니다.
+      }}>
+>>>>>>> Stashed changes
         {/* SVG 그리드 패턴 */}
         {/* 그리드는 편집 모드에서만 표시 */}
         {isAdmin && isEditMode && (
@@ -5576,6 +5918,7 @@ export default function App() {
 
       {/* 어싸인 현황 패널 (관리자 모드에서만 표시) */}
       {isAdmin && showAssignmentStatus && (
+<<<<<<< Updated upstream
         <div
           style={{
             position: "relative",
@@ -5584,6 +5927,15 @@ export default function App() {
             minHeight: "120vh",
             backgroundColor: "#2a2a2a",
             backgroundImage: `
+=======
+        <div style={{
+          position: 'relative',
+          width: '150vw',
+          height: '170vh',
+          minHeight: '120vh',
+          backgroundColor: '#2a2a2a',
+          backgroundImage: `
+>>>>>>> Stashed changes
             linear-gradient(to right, rgba(128, 128, 128, 0.3) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(128, 128, 128, 0.3) 1px, transparent 1px)
           `,
@@ -6158,10 +6510,17 @@ function DraggableAssignmentLineName({ lineName, onMove, onDelete }) {
           minWidth: "80px",
           textAlign: "center",
           zIndex: 50,
+<<<<<<< Updated upstream
           transform: "none", // 드래그 시 정확한 위치를 위해
           display: "flex",
           alignItems: "center",
           gap: "8px",
+=======
+          transform: 'none', // 드래그 시 정확한 위치를 위해
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+>>>>>>> Stashed changes
         }}
         className="assignment-line-name-handle"
       >
@@ -6169,13 +6528,18 @@ function DraggableAssignmentLineName({ lineName, onMove, onDelete }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
+<<<<<<< Updated upstream
             if (
               window.confirm(`"${lineName.name}" 라인명을 삭제하시겠습니까?`)
             ) {
+=======
+            if (window.confirm(`"${lineName.name}" 라인명을 삭제하시겠습니까?`)) {
+>>>>>>> Stashed changes
               onDelete(lineName.id);
             }
           }}
           style={{
+<<<<<<< Updated upstream
             background: "rgba(255,255,255,0.2)",
             color: "white",
             border: "none",
@@ -6197,6 +6561,29 @@ function DraggableAssignmentLineName({ lineName, onMove, onDelete }) {
           onMouseOut={(e) => {
             e.target.style.background = "rgba(255,255,255,0.2)";
             e.target.style.transform = "scale(1)";
+=======
+            background: 'rgba(255,255,255,0.2)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '20px',
+            height: '20px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+            marginLeft: '4px'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.background = 'rgba(255,255,255,0.3)';
+            e.target.style.transform = 'scale(1.1)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.background = 'rgba(255,255,255,0.2)';
+            e.target.style.transform = 'scale(1)';
+>>>>>>> Stashed changes
           }}
         >
           ✕
